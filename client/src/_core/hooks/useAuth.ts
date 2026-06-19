@@ -1,7 +1,7 @@
 import { getLoginUrl } from "@/const";
 import { trpc } from "@/lib/trpc";
 import { TRPCClientError } from "@trpc/client";
-import { useCallback, useEffect, useMemo } from "react";
+import { useCallback, useEffect, useRef } from "react";
 
 type UseAuthOptions = {
   redirectOnUnauthenticated?: boolean;
@@ -9,17 +9,16 @@ type UseAuthOptions = {
 };
 
 export function useAuth(options?: UseAuthOptions) {
-  // Lazy-evaluate getLoginUrl() inside useEffect — NOT as default param.
-  // Using it as a default param causes it to run at render time (before window
-  // is ready and before env vars are confirmed), which throws "Invalid URL"
-  // when VITE_OAUTH_PORTAL_URL is missing.
   const { redirectOnUnauthenticated = false, redirectPath } = options ?? {};
+  const hasRedirected = useRef(false);
 
   const utils = trpc.useUtils();
 
   const meQuery = trpc.auth.me.useQuery(undefined, {
     retry: false,
     refetchOnWindowFocus: false,
+    staleTime: 5 * 60 * 1000,   // 5 menit — tidak re-fetch tiap render
+    gcTime: 10 * 60 * 1000,
   });
 
   const logoutMutation = trpc.auth.logout.useMutation({
@@ -45,47 +44,34 @@ export function useAuth(options?: UseAuthOptions) {
     }
   }, [logoutMutation, utils]);
 
-  const state = useMemo(() => {
-    localStorage.setItem(
-      "manus-runtime-user-info",
-      JSON.stringify(meQuery.data)
-    );
-    return {
-      user: meQuery.data ?? null,
-      loading: meQuery.isLoading || logoutMutation.isPending,
-      error: meQuery.error ?? logoutMutation.error ?? null,
-      isAuthenticated: Boolean(meQuery.data),
-    };
-  }, [
-    meQuery.data,
-    meQuery.error,
-    meQuery.isLoading,
-    logoutMutation.error,
-    logoutMutation.isPending,
-  ]);
+  const user = meQuery.data ?? null;
+  const loading = meQuery.isLoading || logoutMutation.isPending;
+  const isAuthenticated = Boolean(user);
 
   useEffect(() => {
     if (!redirectOnUnauthenticated) return;
-    if (meQuery.isLoading || logoutMutation.isPending) return;
-    if (state.user) return;
+    if (loading) return;
+    if (user) {
+      // Reset flag kalau user sudah login, supaya bisa redirect lagi kalau logout
+      hasRedirected.current = false;
+      return;
+    }
     if (typeof window === "undefined") return;
+    if (hasRedirected.current) return; // Jangan redirect lebih dari sekali
 
-    // Resolve redirect target lazily here so getLoginUrl() runs only when
-    // actually needed (after hydration, when window.location is available).
     const target = redirectPath ?? getLoginUrl();
+    if (!target || target === "/") return; // getLoginUrl() fallback = tidak redirect
     if (window.location.href === target) return;
 
+    hasRedirected.current = true;
     window.location.href = target;
-  }, [
-    redirectOnUnauthenticated,
-    redirectPath,
-    logoutMutation.isPending,
-    meQuery.isLoading,
-    state.user,
-  ]);
+  }, [redirectOnUnauthenticated, redirectPath, loading, user]);
 
   return {
-    ...state,
+    user,
+    loading,
+    isAuthenticated,
+    error: meQuery.error ?? logoutMutation.error ?? null,
     refresh: () => meQuery.refetch(),
     logout,
   };

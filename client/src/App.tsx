@@ -1,6 +1,6 @@
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { useAuth } from "@/_core/hooks/useAuth";
+import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import DashboardLayout from "@/components/DashboardLayout";
 import { DashboardLayoutSkeleton } from "@/components/DashboardLayoutSkeleton";
 import { Route, Switch } from "wouter";
@@ -13,35 +13,28 @@ import SetorPage from "./pages/SetorPage";
 import RiwayatPage from "./pages/RiwayatPage";
 import SettingsPage from "./pages/SettingsPage";
 import AdminPage from "./pages/AdminPage";
-
-function ProtectedRoute({
-  component: Component,
-  requiredRole,
-}: {
-  component: React.ComponentType<any>;
-  requiredRole?: "admin" | "user";
-}) {
-  const { user, loading } = useAuth();
-
-  if (loading) {
-    return <DashboardLayoutSkeleton />;
-  }
-
-  if (!user) {
-    return <DashboardLayoutSkeleton />;
-  }
-
-  if (requiredRole && user.role !== requiredRole) {
-    return <NotFound />;
-  }
-
-  return <Component />;
-}
+import { useEffect, useRef } from "react";
+import { getLoginUrl } from "./const";
 
 function Router() {
-  // redirectOnUnauthenticated: true → useAuth will call getLoginUrl() lazily
-  // inside useEffect and redirect. While waiting, show skeleton (not 404).
-  const { user, loading } = useAuth({ redirectOnUnauthenticated: true });
+  const { user, loading } = useAuth();
+  const hasRedirected = useRef(false);
+
+  useEffect(() => {
+    if (loading) return;
+    if (user) {
+      hasRedirected.current = false;
+      return;
+    }
+    if (hasRedirected.current) return;
+
+    const loginUrl = getLoginUrl();
+    if (!loginUrl || loginUrl === "/") return;
+    if (window.location.href === loginUrl) return;
+
+    hasRedirected.current = true;
+    window.location.href = loginUrl;
+  }, [loading, user]);
 
   if (loading || !user) {
     return <DashboardLayoutSkeleton />;
@@ -50,6 +43,7 @@ function Router() {
   return (
     <DashboardLayout>
       <Switch>
+        <Route path="/" component={Dashboard} />
         <Route path="/dashboard" component={Dashboard} />
         <Route path="/generate" component={GeneratePage} />
         <Route path="/setor" component={SetorPage} />
@@ -57,11 +51,10 @@ function Router() {
         <Route path="/settings" component={SettingsPage} />
         <Route
           path="/admin"
-          component={() => (
-            <ProtectedRoute component={AdminPage} requiredRole="admin" />
-          )}
+          component={() =>
+            user.role === "admin" ? <AdminPage /> : <NotFound />
+          }
         />
-        <Route path="/" component={Dashboard} />
         <Route component={NotFound} />
       </Switch>
     </DashboardLayout>
@@ -74,7 +67,9 @@ export default function App() {
       <ThemeProvider defaultTheme="light">
         <TooltipProvider>
           <Toaster />
-          <Router />
+          <AuthProvider>
+            <Router />
+          </AuthProvider>
         </TooltipProvider>
       </ThemeProvider>
     </ErrorBoundary>

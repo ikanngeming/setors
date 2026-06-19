@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { useState, useEffect } from "react";
 import { Loader2, User, LogOut } from "lucide-react";
-import { useAuth } from "@/_core/hooks/useAuth";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function SettingsPage() {
   const { user, logout } = useAuth();

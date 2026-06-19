@@ -11,7 +11,6 @@ import "./index.css";
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      // Jangan retry kalau dapat 401 — supaya tidak memicu loop
       retry: (failureCount, error) => {
         if (
           error instanceof TRPCClientError &&
@@ -27,7 +26,7 @@ const queryClient = new QueryClient({
   },
 });
 
-// Tracking apakah sudah sedang redirect, supaya tidak redirect berkali-kali
+// Guard: hanya redirect sekali per session page load
 let isRedirectingToLogin = false;
 
 const redirectToLoginIfUnauthorized = (error: unknown) => {
@@ -42,34 +41,28 @@ const redirectToLoginIfUnauthorized = (error: unknown) => {
 
   if (!isUnauthorized) return;
 
-  // Jangan redirect kalau ini dari query auth.me itu sendiri — biarkan
-  // useAuth yang handle via redirectOnUnauthenticated
-  const queryKey = (error as any)?.meta?.queryKey;
-  if (
-    Array.isArray(queryKey) &&
-    queryKey[0]?.[0] === "auth" &&
-    queryKey[0]?.[1] === "me"
-  ) {
+  // auth.me error ditangani oleh AuthContext & Router — skip di sini
+  const key = (error as any)?.meta?.queryKey;
+  if (Array.isArray(key) && key[0]?.[0] === "auth" && key[0]?.[1] === "me") {
     return;
   }
 
   isRedirectingToLogin = true;
-  window.location.href = getLoginUrl();
+  const loginUrl = getLoginUrl();
+  if (loginUrl && loginUrl !== "/") {
+    window.location.href = loginUrl;
+  }
 };
 
 queryClient.getQueryCache().subscribe((event) => {
   if (event.type === "updated" && event.action.type === "error") {
-    const error = event.query.state.error;
-    redirectToLoginIfUnauthorized(error);
-    console.error("[API Query Error]", error);
+    redirectToLoginIfUnauthorized(event.query.state.error);
   }
 });
 
 queryClient.getMutationCache().subscribe((event) => {
   if (event.type === "updated" && event.action.type === "error") {
-    const error = event.mutation.state.error;
-    redirectToLoginIfUnauthorized(error);
-    console.error("[API Mutation Error]", error);
+    redirectToLoginIfUnauthorized(event.mutation.state.error);
   }
 });
 
