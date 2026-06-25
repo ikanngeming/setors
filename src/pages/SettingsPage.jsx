@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import { User, Phone, Lock, Save, Plus, Trash2, CreditCard, Eye, EyeOff, AlertTriangle } from 'lucide-react'
 import { Card, Button, Input, Modal, Divider } from '../components/UI'
 import { useAuth } from '../context/AuthContext'
-import { userAPI, authAPI } from '../api'
+import { userAPI, authAPI } from '../services/api'
 
 export default function SettingsPage() {
   const { user, setUser, logout } = useAuth()

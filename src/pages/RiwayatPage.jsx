@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { Search, RefreshCw } from 'lucide-react'
 import { Card, Badge, StatusDot, EmptyState, Input } from '../components/UI'
-import { userAPI } from '../api'
+import { userAPI } from '../services/api'
 
 function toRupiah(n) {
   return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(n || 0)

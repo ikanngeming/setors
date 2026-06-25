@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import { Users, Search, CheckCircle, Send, BarChart2, Mail, ChevronLeft, ChevronRight, Megaphone, RefreshCw } from 'lucide-react'
 import { Card, Button, Input, Badge, EmptyState, Modal } from '../components/UI'
-import { adminAPI } from '../api'
+import { adminAPI } from '../services/api'
 
 function toRupiah(n) {
   return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(n || 0)

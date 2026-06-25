@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { Zap, Copy, CheckCheck, Info } from 'lucide-react'
 import { Card, Button, Input, Badge, EmptyState } from '../components/UI'
-import { emailAPI } from '../api'
+import { emailAPI } from '../services/api'
 
 export default function GeneratePage() {
   const [count, setCount]   = useState('5')

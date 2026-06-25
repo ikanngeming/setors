@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { TrendingUp, Clock, CheckCircle, Wallet, ArrowUpRight, Mail, Zap, Send, RefreshCw } from 'lucide-react'
 import { Card, Badge, StatusDot } from '../components/UI'
 import { useAuth } from '../context/AuthContext'
-import { userAPI } from '../api'
+import { userAPI } from '../services/api'
 
 function toRupiah(n) {
   return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(n || 0)
