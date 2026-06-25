@@ -1,0 +1,235 @@
+/* Mengimpor Font Fredoka One & JetBrains Mono dari Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+*, *::before, *::after { 
+  box-sizing: border-box; 
+  margin: 0; 
+  padding: 0; 
+}
+
+:root {
+  /* Brand & Base Colors */
+  --bg-base: #030712;
+  --bg-card: #0b1329;
+  --bg-card-hover: #111c3a;
+  --bg-elevated: #16224f;
+  
+  /* Borders & Dividers */
+  --border: rgba(255, 255, 255, 0.06);
+  --border-light: rgba(255, 255, 255, 0.12);
+  --border-focus: #60a5fa;
+
+  /* Accents */
+  --blue: #3b82f6;
+  --blue-hover: #2563eb;
+  --blue-glow: rgba(59, 130, 246, 0.15);
+  --green: #10b981;
+  --green-glow: rgba(16, 185, 129, 0.12);
+  --amber: #f59e0b;
+  --red: #ef4444;
+
+  /* Typography */
+  --text-primary: #f9fafb;
+  --text-secondary: #9ca3af;
+  --text-muted: #6b7280;
+
+  /* Layout & Glassmorphism (Radius disesuaikan agar lebih rounded/matching dengan Fredoka) */
+  --radius-lg: 20px;
+  --radius-md: 14px;
+  --radius-sm: 10px;
+  
+  /* Shadows */
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -4px rgba(0, 0, 0, 0.3);
+
+  /* Transitions */
+  --transition-fast: 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-normal: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+html { 
+  scroll-behavior: smooth; 
+}
+
+body {
+  /* Menggunakan Fredoka sebagai font utama */
+  font-family: 'Fredoka', system-ui, -apple-system, sans-serif;
+  background-color: var(--bg-base);
+  color: var(--text-primary);
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  line-height: 1.5;
+  letter-spacing: 0.02em; /* Fredoka terlihat lebih bagus dengan sedikit tracking/spasi */
+}
+
+/* Scrollbar Minimalis (Disesuaikan jadi rounded penuh) */
+::-webkit-scrollbar { 
+  width: 8px; 
+  height: 8px;
+}
+::-webkit-scrollbar-track { 
+  background: var(--bg-base); 
+}
+::-webkit-scrollbar-thumb { 
+  background: var(--border-light); 
+  border-radius: 9999px; 
+}
+::-webkit-scrollbar-thumb:hover { 
+  background: var(--text-muted); 
+}
+
+.mono { 
+  font-family: 'JetBrains Mono', SFMono-Regular, Consolas, monospace; 
+  font-size: 0.85em; /* Sedikit dikecilkan agar proporsinya seimbang dengan Fredoka */
+}
+
+/* Base Form Elements Reset */
+button, input, select, textarea { 
+  font-family: inherit; 
+  font-size: inherit;
+  color: inherit;
+  background: transparent;
+  border: none;
+}
+
+button { 
+  cursor: pointer; 
+  transition: var(--transition-fast);
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+/* ==========================================
+   KEYFRAMES (Dapur Animasi)
+   ========================================== */
+
+/* 1. Fade Up (Masuk halus dari bawah) */
+@keyframes fadeUp {
+  from { 
+    opacity: 0; 
+    transform: translateY(12px); 
+  }
+  to { 
+    opacity: 1; 
+    transform: translateY(0); 
+  }
+}
+
+/* 2. Pulse Glow (Efek bernapas untuk status/notifikasi) */
+@keyframes pulse-glow {
+  0%, 100% { 
+    box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.4); 
+    transform: scale(1);
+  }
+  50% { 
+    box-shadow: 0 0 0 8px rgba(59, 130, 246, 0); 
+    transform: scale(1.03);
+  }
+}
+
+/* 3. Spin (Untuk Loading Spinner) */
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* 4. Shimmer (Efek kilau pada Skeleton Loader) */
+@keyframes shimmer {
+  100% { transform: translateX(100%); }
+}
+
+/* 5. Fade In (Masuk samar-samar) */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+
+/* ==========================================
+   UTILITY CLASSES (Siap Pakai di HTML)
+   ========================================== */
+
+/* --- Kelompok Fade Up --- */
+.fade-up { 
+  animation: fadeUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) both; 
+}
+.fade-up-delay-1 { 
+  animation: fadeUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.1s both; 
+}
+.fade-up-delay-2 { 
+  animation: fadeUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.2s both; 
+}
+.fade-up-delay-3 { 
+  animation: fadeUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.3s both; 
+}
+
+/* --- Kelompok Fade In --- */
+.fade-in {
+  animation: fadeIn 0.3s ease-out both;
+}
+
+/* --- Kelompok Loading & Skeleton --- */
+.animate-spin {
+  animation: spin 1s linear infinite;
+  display: inline-block;
+}
+
+.skeleton {
+  position: relative;
+  overflow: hidden;
+  background: var(--bg-elevated);
+  border-radius: var(--radius-sm);
+}
+.skeleton::after {
+  position: absolute;
+  top: 0; right: 0; bottom: 0; left: 0;
+  transform: translateX(-100%);
+  background-image: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.03) 20%,
+    rgba(255, 255, 255, 0.06) 60%,
+    rgba(255, 255, 255, 0)
+  );
+  animation: shimmer 2s infinite;
+  content: '';
+}
+
+/* --- Kelompok Pulse Glow --- */
+.animate-glow-blue {
+  animation: pulse-glow 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+.animate-glow-green {
+  animation: pulse-glow 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  --blue: var(--green);
+}
+
+
+/* ==========================================
+   INTERACTIVE UTILITIES (Hover & Active States)
+   ========================================== */
+
+/* Efek angkat sedikit saat hover */
+.hover-lift {
+  transition: transform var(--transition-normal), box-shadow var(--transition-normal), background-color var(--transition-fast);
+}
+.hover-lift:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+  background-color: var(--bg-card-hover);
+}
+.hover-lift:active {
+  transform: translateY(0);
+}
+
+/* Efek mengecil saat ditekan */
+.btn-click-effect {
+  transition: transform var(--transition-fast);
+}
+.btn-click-effect:active {
+  transform: scale(0.96);
+}
