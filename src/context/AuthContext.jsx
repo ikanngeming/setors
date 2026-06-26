@@ -1,33 +1,36 @@
 import React, { createContext, useContext, useState, useEffect } from 'react'
+import { authAPI } from '../services/api'
 
 const AuthContext = createContext(null)
 
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(null)
+  const [user, setUser]       = useState(null)
   const [loading, setLoading] = useState(true)
 
+  // Saat app dimuat, cek apakah ada session cookie yang masih valid
   useEffect(() => {
-    const saved = localStorage.getItem('se_user')
-    if (saved) {
-      try { setUser(JSON.parse(saved)) } catch {}
-    }
-    setLoading(false)
+    authAPI.getProfile()
+      .then(({ data }) => {
+        if (data?.user) setUser(data.user)
+      })
+      .catch(() => {
+        // Tidak ada session / cookie expired — user perlu login ulang
+        setUser(null)
+      })
+      .finally(() => setLoading(false))
   }, [])
 
   const login = (userData) => {
     setUser(userData)
-    localStorage.setItem('se_user', JSON.stringify(userData))
   }
 
-  const logout = () => {
+  const logout = async () => {
+    try { await authAPI.logout() } catch {}
     setUser(null)
-    localStorage.removeItem('se_user')
   }
 
   const updateUser = (updates) => {
-    const updated = { ...user, ...updates }
-    setUser(updated)
-    localStorage.setItem('se_user', JSON.stringify(updated))
+    setUser(prev => ({ ...prev, ...updates }))
   }
 
   return (

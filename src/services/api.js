@@ -1,65 +1,41 @@
 import axios from 'axios'
 
-// All sensitive values must be set as Vercel Environment Variables
-// In Vercel dashboard: Settings → Environment Variables
-const API_BASE = import.meta.env.VITE_API_BASE_URL || '/api'
-
 const api = axios.create({
-  baseURL: API_BASE,
+  baseURL: '/api',
   headers: { 'Content-Type': 'application/json' },
-  withCredentials: true, // ✅ Wajib agar session cookie dikirim di setiap request
+  withCredentials: true, // wajib agar session cookie ikut di setiap request
 })
 
-// ─── Auth API ─────────────────────────────────────────────────────────────────
+// ─── Auth ─────────────────────────────────────────────────────────────────────
 export const authAPI = {
-  // Daftar akun baru → kirim OTP ke email
-  register: (data) => api.post('/auth/register', data),
-  
-  // Verifikasi OTP → akun dibuat, session dimulai
+  register:  (data)       => api.post('/auth/register', data),
   verifyOtp: (email, otp) => api.post('/auth/verify-otp', { email, otp }),
-  
-  // Login → set session cookie
-  login: (data) => api.post('/auth/login', data),
-  
-  // Logout → hapus session cookie
-  logout: () => api.post('/auth/logout'),
+  login:     (data)       => api.post('/auth/login', data),
+  logout:    ()           => api.post('/auth/logout'),
+  getProfile: ()          => api.get('/auth/profile'),
 }
 
-// ─── User API ─────────────────────────────────────────────────────────────────
+// ─── User ─────────────────────────────────────────────────────────────────────
 export const userAPI = {
-  // Ambil profil user yang sedang login
-  getProfile: () => api.get('/user/profile'),
-  
-  // Update username, phone, atau dana
-  updateProfile: (data) => api.post('/user/update-profile', data),
-  
-  // Ganti password (butuh currentPassword & newPassword)
-  changePassword: (data) => api.post('/user/change-password', data),
-  
-  // Hapus akun (butuh konfirmasi password)
-  deleteAccount: (data) => api.post('/user/delete-account', data),
-  
-  // Riwayat transaksi user
-  getHistory: () => api.get('/user/history'),
-  
-  // Tambah akun DANA
-  addDana: (data) => api.post('/user/dana', data),
+  getProfile:     ()     => api.get('/auth/profile'),
+  updateProfile:  (data) => api.post('/auth/update-profile', data),
+  changePassword: (data) => api.post('/auth/change-password', data),
+  deleteAccount:  (data) => api.post('/auth/delete-account', data),
 }
 
-// ─── Email API ────────────────────────────────────────────────────────────────
+// ─── Email ────────────────────────────────────────────────────────────────────
 export const emailAPI = {
   generate: (count) => api.post('/emails/generate', { count }),
-  getRooms: () => api.get('/emails/rooms'),
-  deposit: (data) => api.post('/emails/deposit', data),
-  getStatus: (email) => api.get(`/emails/status?email=${encodeURIComponent(email)}`),
+  getRooms: ()      => api.get('/emails/rooms'),
+  deposit:  (data)  => api.post('/emails/deposit', data),
 }
 
-// ─── Admin API ────────────────────────────────────────────────────────────────
+// ─── Admin ────────────────────────────────────────────────────────────────────
 export const adminAPI = {
-  getUsers: (page) => api.get(`/admin/users?page=${page}`),
-  checkEmail: (email) => api.get(`/admin/check-email?email=${encodeURIComponent(email)}`),
+  getUsers:     (page)  => api.get(`/admin/users?page=${page}`),
+  checkEmail:   (email) => api.get(`/admin/check-email?email=${encodeURIComponent(email)}`),
   approveEmail: (email) => api.post('/admin/approve', { email }),
-  broadcast: (message, photo) => api.post('/admin/broadcast', { message, photo }),
+  broadcast:    (msg)   => api.post('/admin/broadcast', { message: msg }),
 }
 
 export default api

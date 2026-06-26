@@ -1,98 +1,33 @@
-// api/auth/delete-account.js
-//
-// POST /api/auth/delete-account — hapus akun user yang sedang login
-//
-// Environment variables:
-//   FIREBASE_PROJECT_ID, FIREBASE_CLIENT_EMAIL, FIREBASE_PRIVATE_KEY
-//   SESSION_SECRET
-
+// api/auth/delete-account.js — POST /api/auth/delete-account
 import { db, COLLECTIONS } from '../_lib/firebase.js'
-import { parse, serialize } from 'cookie'
-import { createHmac, scryptSync, timingSafeEqual } from 'crypto'
+import { requireAuth } from '../_lib/session.js'
+import { serialize } from 'cookie'
+import { scryptSync, timingSafeEqual } from 'crypto'
 
-// ─── Session Helpers ─────────────────────────────────────────────────────────
-
-function signSession(userId) {
-  const hmac = createHmac('sha256', process.env.SESSION_SECRET)
-  hmac.update(String(userId))
-  return hmac.digest('hex')
-}
-
-function verifySession(cookies) {
-  const userId = cookies['session_uid']
-  const signature = cookies['session_sig']
-  if (!userId || !signature) return null
-  return signature === signSession(userId) ? userId : null
-}
-
-function clearSessionCookies(res) {
-  const opts = {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
-    path: '/',
-    maxAge: 0,
-  }
-  res.setHeader('Set-Cookie', [
-    serialize('session_uid', '', opts),
-    serialize('session_sig', '', opts),
-  ])
-}
-
-// ─── Password Verifier ────────────────────────────────────────────────────────
-
-function verifyPassword(password, stored) {
-  if (!stored.includes(':')) return stored === password
+function verifyPassword(pw, stored) {
+  if (!stored.includes(':')) return stored === pw
   const [salt, hash] = stored.split(':')
-  const inputHash = scryptSync(password, salt, 64)
-  const storedHash = Buffer.from(hash, 'hex')
-  return timingSafeEqual(inputHash, storedHash)
+  return timingSafeEqual(scryptSync(pw, salt, 64), Buffer.from(hash, 'hex'))
 }
-
-// ─── Handler ─────────────────────────────────────────────────────────────────
 
 export default async function handler(req, res) {
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' })
-  }
-
-  const cookies = parse(req.headers.cookie || '')
-  const userId = verifySession(cookies)
-
-  if (!userId) {
-    return res.status(401).json({ error: 'Sesi tidak valid. Silakan login ulang.' })
-  }
+  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' })
+  const user = await requireAuth(req, res)
+  if (!user) return
 
   const { password } = req.body
-
-  if (!password) {
-    return res.status(400).json({ error: 'Masukkan password untuk konfirmasi penghapusan akun.' })
-  }
+  if (!password) return res.status(400).json({ error: 'Masukkan password untuk konfirmasi.' })
+  if (!verifyPassword(password, user.password || '')) return res.status(401).json({ error: 'Password salah.' })
 
   try {
-    const userRef = db.collection(COLLECTIONS.USERS).doc(userId)
-    const userDoc = await userRef.get()
-
-    if (!userDoc.exists) {
-      return res.status(404).json({ error: 'User tidak ditemukan.' })
-    }
-
-    const user = userDoc.data()
-
-    const isValid = verifyPassword(password, user.password || '')
-    if (!isValid) {
-      return res.status(401).json({ error: 'Password salah. Penghapusan akun dibatalkan.' })
-    }
-
-    // Hapus dokumen user dari Firestore
-    await userRef.delete()
-
-    // Hapus session cookie
-    clearSessionCookies(res)
-
-    return res.status(200).json({ success: true, message: 'Akun berhasil dihapus.' })
+    await db.collection(COLLECTIONS.USERS).doc(user.id).delete()
+    const opts = { httpOnly: true, secure: true, sameSite: 'lax', path: '/', maxAge: 0 }
+    res.setHeader('Set-Cookie', [
+      serialize('session_uid', '', opts),
+      serialize('session_sig', '', opts),
+    ])
+    return res.status(200).json({ success: true })
   } catch (err) {
-    console.error('Delete account error:', err)
     return res.status(500).json({ error: 'Terjadi kesalahan server.' })
   }
 }
